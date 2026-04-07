@@ -1,0 +1,14 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Block direct access to includes/config
+    RewriteRule ^(includes|config)/ - [F,L]
+</IfModule>
+
+# PHP session security
+php_value session.cookie_httponly 1
+php_value session.use_strict_mode 1
