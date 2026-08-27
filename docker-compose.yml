@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # Наш веб-сервер с PHP 7.4
+  web:
+    build: .
+    container_name: php_74_apache
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+
+  # Наша база данных MySQL 5.7
+  db:
+    image: mysql:5.7
+    container_name: mysql_57
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: cases_shop
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
