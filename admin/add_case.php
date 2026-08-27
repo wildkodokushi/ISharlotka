@@ -6,6 +6,7 @@ requireAdmin();
 require_once dirname(__DIR__) . '/config/db.php';
 
 $uploadDir = dirname(__DIR__) . '/uploads/cases';
+if (!is_dir($uploadDir)) { mkdir($uploadDir, 0755, true); }
 
 $editId = (int)($_GET['edit'] ?? 0);
 $case = null;
@@ -17,6 +18,7 @@ if ($editId) {
 }
 
 $materials = $pdo->query("SELECT * FROM materials ORDER BY material_name")->fetchAll();
+$collections_list = $pdo->query("SELECT * FROM collections ORDER BY name")->fetchAll();
 $models    = $pdo->query("SELECT * FROM device_models ORDER BY firm, model_name")->fetchAll();
 $errors = [];
 
@@ -26,9 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'description' => trim($_POST['description'] ?? ''),
         'price'       => (float)($_POST['price'] ?? 0),
         'count'       => (int)($_POST['count'] ?? 0),
-        'collection'  => trim($_POST['collection'] ?? ''),
+        'collection_id' => (int)($_POST['collection_id'] ?? 0),
         'inscription' => trim($_POST['inscription'] ?? ''),
         'sticker'     => isset($_POST['sticker']) ? 1 : 0,
+        'has_3d'      => 0, // больше не используется отдельным флагом — 3D теперь доступно для любого чехла в конструкторе
         'color'       => trim($_POST['color'] ?? ''),
         'material_id' => (int)($_POST['material_id'] ?? 0) ?: null,
         'model_id'    => (int)($_POST['model_id'] ?? 0) ?: null,
@@ -58,11 +61,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         if ($editId) {
-            $stmt = $pdo->prepare("UPDATE cases_catalog SET title=?,description=?,price=?,count=?,collection=?,inscription=?,sticker=?,color=?,material_id=?,model_id=?,image=? WHERE id_case=?");
-            $stmt->execute([$data['title'],$data['description'],$data['price'],$data['count'],$data['collection'],$data['inscription'],$data['sticker'],$data['color'],$data['material_id'],$data['model_id'],$imageName,$editId]);
+            $stmt = $pdo->prepare("UPDATE cases_catalog SET title=?,description=?,price=?,count=?,collection_id=?,inscription=?,sticker=?,color=?,material_id=?,model_id=?,has_3d=?,image=? WHERE id_case=?");
+            $stmt->execute([$data['title'],$data['description'],$data['price'],$data['count'],$data['collection_id'],$data['inscription'],$data['sticker'],$data['color'],$data['material_id'],$data['model_id'],$data['has_3d'],$imageName,$editId]);
         } else {
-            $stmt = $pdo->prepare("INSERT INTO cases_catalog (title,description,price,count,collection,inscription,sticker,color,material_id,model_id,image) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
-            $stmt->execute([$data['title'],$data['description'],$data['price'],$data['count'],$data['collection'],$data['inscription'],$data['sticker'],$data['color'],$data['material_id'],$data['model_id'],$imageName]);
+            $stmt = $pdo->prepare("INSERT INTO cases_catalog (title,description,price,count,collection_id,inscription,sticker,color,material_id,model_id,has_3d,image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+            $stmt->execute([$data['title'],$data['description'],$data['price'],$data['count'],$data['collection_id'],$data['inscription'],$data['sticker'],$data['color'],$data['material_id'],$data['model_id'],$data['has_3d'],$imageName]);
         }
         redirect('/admin/catalog.php?saved=1');
     }
@@ -113,8 +116,16 @@ require_once __DIR__ . '/header.php';
 
         <div class="form-row">
             <div class="form-group">
-                <label class="form-label">Коллекция</label>
-                <input class="form-control" type="text" name="collection" value="<?= htmlspecialchars($case['collection'] ?? '') ?>">
+                <label class="form-label">Коллекция (выбрать из списка)</label>
+                <select name="collection_id" class="form-select">
+                            <option value="0">— Без коллекции —</option>
+                            <?php foreach ($collections_list as $col_opt): ?>
+                            <option value="<?= $col_opt['id_collection'] ?>"
+                                <?= ($case['collection_id'] ?? 0) == $col_opt['id_collection'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($col_opt['name']) ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>">
             </div>
             <div class="form-group">
                 <label class="form-label">Надпись</label>
@@ -157,6 +168,7 @@ require_once __DIR__ . '/header.php';
                 <label class="form-label" for="sticker" style="text-transform:none;letter-spacing:0">Включить стикер в комплект</label>
             </div>
         </div>
+
 
         <div class="form-section-title">Изображение</div>
         <?php

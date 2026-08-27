@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/bootstrap.php';
 $pageTitle = 'Регистрация — iSharlotka';
+$pageDescription = 'Зарегистрируйтесь в iSharlotka и получите доступ к каталогу авторских чехлов и онлайн-конструктору.';
+$pageNoIndex = true;
 require_once __DIR__ . '/includes/auth.php';
 if (isLoggedIn()) { redirect('/catalog.php'); }
 require_once __DIR__ . '/config/db.php';
@@ -71,7 +73,7 @@ require_once __DIR__ . '/includes/header.php';
             <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem">Зарегистрироваться</button>
         </form>
         <div class="auth-footer">
-            Уже есть аккаунт? <a href="/login.php">Войти</a>
+            Уже есть аккаунт? <a href="./login.php">Войти</a>
         </div>
     </div>
 </div>

@@ -1,0 +1,13 @@
+# Пользовательские загрузки
+uploads/
+
+# База данных и конфигурации с паролями
+database.sql
+config/db.php
+config/config.php
+
+# Системные файлы и настройки IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -15,13 +15,21 @@ if (isset($_GET['delete'])) {
 $search = trim($_GET['search'] ?? '');
 $params = [];
 $where = '1=1';
-if ($search) { $where .= ' AND (c.title LIKE ? OR c.collection LIKE ?)'; $params[] = "%$search%"; $params[] = "%$search%"; }
+if ($search) { $where .= ' AND (c.title LIKE ?)'; $params[] = "%$search%"; }
 
-$cases = $pdo->prepare("SELECT c.*, m.material_name, d.firm, d.model_name
+$cases = $pdo->prepare("
+    SELECT c.*, 
+           m.material_name, 
+           d.firm, 
+           d.model_name,
+           col.name AS collection_name   -- добавляем название коллекции
     FROM cases_catalog c
-    LEFT JOIN materials m ON c.material_id=m.id_material
-    LEFT JOIN device_models d ON c.model_id=d.id_model
-    WHERE $where ORDER BY c.created_at DESC");
+    LEFT JOIN materials m ON c.material_id = m.id_material
+    LEFT JOIN device_models d ON c.model_id = d.id_model
+    LEFT JOIN collections col ON c.collection_id = col.id_collection
+    WHERE $where 
+    ORDER BY c.created_at DESC
+");
 $cases->execute($params);
 $cases = $cases->fetchAll();
 
@@ -56,7 +64,7 @@ require_once __DIR__ . '/header.php';
                 <tr>
                     <td><?= $c['id_case'] ?></td>
                     <td style="color:var(--cream);font-weight:500"><?= htmlspecialchars($c['title']) ?></td>
-                    <td><?= htmlspecialchars($c['collection'] ?? '—') ?></td>
+                    <td><?= htmlspecialchars($c['collection_name'] ?? '—') ?></td>
                     <td><?= htmlspecialchars($c['firm'].' '.($c['model_name'] ?? '—')) ?></td>
                     <td><?= htmlspecialchars($c['material_name'] ?? '—') ?></td>
                     <td style="color:var(--gold)"><?= number_format($c['price'],0,'.',' ') ?> ₽</td>

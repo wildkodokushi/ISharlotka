@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/bootstrap.php';
 $pageTitle = 'Оформление заказа — iSharlotka';
+$pageDescription = 'Оформление заказа в интернет-магазине авторских чехлов iSharlotka.';
+$pageNoIndex = true;
 require_once __DIR__ . '/includes/auth.php';
 requireAuth('/login.php');
 require_once __DIR__ . '/config/db.php';
@@ -21,7 +23,38 @@ foreach ($cartData as $caseId => $item) {
     if (isset($cases[$caseId])) $total += $cases[$caseId]['price'] * $item['qty'];
 }
 
+// ── Финальная проверка остатков перед оформлением ──────────────────────
+$stockIssues = [];
+foreach ($cartData as $caseId => $item) {
+    if (!isset($cases[$caseId])) continue;
+    $available = (int)$cases[$caseId]['count'];
+    $requested = (int)$item['qty'];
+    if ($requested > $available) {
+        $stockIssues[] = [
+            'title'     => $cases[$caseId]['title'],
+            'available' => $available,
+            'requested' => $requested,
+        ];
+        // Подрезаем количество в сессии до доступного остатка
+        $_SESSION['cart'][$caseId]['qty'] = max(0, $available);
+        if ($available <= 0) { unset($_SESSION['cart'][$caseId]); }
+    }
+}
+
 $error = '';
+if ($stockIssues) {
+    $msgs = [];
+    foreach ($stockIssues as $issue) {
+        $msgs[] = '«'.$issue['title'].'»: запрошено '.$issue['requested'].', в наличии '.$issue['available'].' шт.';
+    }
+    $error = 'Некоторых товаров не хватает на складе. Количество в корзине обновлено: ' . implode('; ', $msgs);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $stockIssues) {
+    // Не позволяем оформить заказ, пока остатки не подтверждены повторно
+    $_SESSION['flash_error'] = $error;
+    redirect('/cart.php');
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Create order
     try {
@@ -31,17 +64,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $orderId = $pdo->lastInsertId();
         foreach ($cartData as $caseId => $item) {
             if (!isset($cases[$caseId])) continue;
+
+            // Списываем остаток. Если строк не затронуто — на складе не хватает,
+            // откатываем всю транзакцию, чтобы не записать недостоверный заказ.
+            $upd = $pdo->prepare("UPDATE cases_catalog SET count = count - ? WHERE id_case = ? AND count >= ?");
+            $upd->execute([$item['qty'], $caseId, $item['qty']]);
+            if ($upd->rowCount() === 0) {
+                throw new Exception('Недостаточно товара «'.$cases[$caseId]['title'].'» на складе');
+            }
+
             $stmt = $pdo->prepare("INSERT INTO order_composition (id_order, id_case, count, custom_design) VALUES (?,?,?,?)");
             $stmt->execute([$orderId, $caseId, $item['qty'], $item['custom_design'] ?? '']);
-            // Decrease stock
-            $pdo->prepare("UPDATE cases_catalog SET count = count - ? WHERE id_case = ? AND count >= ?")->execute([$item['qty'], $caseId, $item['qty']]);
         }
         $pdo->commit();
         cartClear();
         redirect("/profile.php?success=order&id=$orderId");
     } catch (Exception $e) {
         $pdo->rollBack();
-        $error = 'Ошибка при оформлении заказа. Попробуйте снова.';
+        $_SESSION['flash_error'] = 'Не удалось оформить заказ: ' . $e->getMessage() . '. Проверьте корзину и попробуйте снова.';
+        redirect('/cart.php');
     }
 }
 

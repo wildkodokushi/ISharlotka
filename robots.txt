@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /index.php
+Disallow: /admin/
+Disallow: /api/
+Disallow: /config/
+Disallow: /includes/
+Disallow: /catalog.php
+Disallow: /product.php
+Disallow: /constructor.php
+Disallow: /cart.php
+Disallow: /checkout.php
+Disallow: /profile.php
+Disallow: /login.php
+Disallow: /register.php
+
+Sitemap: /sitemap.php

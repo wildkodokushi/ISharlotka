@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/bootstrap.php';
-$pageTitle = 'Вход — iSharlotka';
+$pageTitle = 'Вход в личный кабинет — iSharlotka';
+$pageDescription = 'Войдите в личный кабинет iSharlotka, чтобы оформить заказ и отслеживать его статус.';
+$pageNoIndex = true;
 require_once __DIR__ . '/includes/auth.php';
 if (isLoggedIn()) { redirect('/catalog.php'); }
 require_once __DIR__ . '/config/db.php';
@@ -44,7 +46,7 @@ require_once __DIR__ . '/includes/header.php';
             <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem">Войти</button>
         </form>
         <div class="auth-footer">
-            Нет аккаунта? <a href="/register.php">Зарегистрироваться</a>
+            Нет аккаунта? <a href="./register.php">Зарегистрироваться</a>
         </div>
     </div>
 </div>

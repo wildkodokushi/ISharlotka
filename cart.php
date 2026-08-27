@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/bootstrap.php';
 $pageTitle = 'Корзина — iSharlotka';
+$pageDescription = 'Ваша корзина в интернет-магазине iSharlotka.';
+$pageNoIndex = true;
 require_once __DIR__ . '/includes/auth.php';
 requireAuth('/login.php');
 require_once __DIR__ . '/config/db.php';
@@ -37,6 +39,15 @@ require_once __DIR__ . '/includes/header.php';
 </div>
 
 <div class="container cart-page">
+    <?php
+ if (!empty($_SESSION['flash_error'])): ?>
+        <div class="alert alert-error" style="margin-bottom:1.5rem">
+            ✕ <?= htmlspecialchars($_SESSION['flash_error']) ?>
+        </div>
+        <?php
+ unset($_SESSION['flash_error']); ?>
+    <?php
+ endif; ?>
     <?php
  if (empty($cartItems)): ?>
         <div class="cart-empty fade-in">
@@ -75,7 +86,12 @@ require_once __DIR__ . '/includes/header.php';
                                     <div class="cart-item-custom">✦ <?= htmlspecialchars($item['custom_design']) ?></div>
                                 <?php
  endif; ?>
-                                <div style="font-size:0.8rem;color:var(--text-muted)">Кол-во: <?= $item['qty'] ?></div>
+                                <div class="cart-qty-control">
+                                    <button type="button" class="qty-btn" onclick="changeQty(<?= $item['id_case'] ?>, -1, <?= (int)$item['count'] ?>)">−</button>
+                                    <span class="qty-value" id="qty-<?= $item['id_case'] ?>"><?= $item['qty'] ?></span>
+                                    <button type="button" class="qty-btn" onclick="changeQty(<?= $item['id_case'] ?>, 1, <?= (int)$item['count'] ?>)">+</button>
+                                    <span class="qty-stock-hint">в наличии: <?= (int)$item['count'] ?></span>
+                                </div>
                             </div>
                             <div class="cart-item-actions">
                                 <div class="cart-item-price"><?= number_format($item['subtotal'],0,'.',' ') ?> ₽</div>
@@ -119,3 +135,26 @@ require_once __DIR__ . '/includes/header.php';
 
 <?php
  require_once __DIR__ . '/includes/footer.php'; ?>
+
+<script>
+async function changeQty(caseId, delta, stock) {
+    try {
+        const fd = new FormData();
+        fd.append('case_id', caseId);
+        fd.append('delta', delta);
+        const res = await fetch((window.BASE_URL||'') + '/api/cart_update.php', { method:'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+            if (data.clamped && data.message) {
+                showToast(data.message, 'warning');
+            }
+            location.reload();
+        } else {
+            showToast(data.error || 'Не удалось изменить количество', 'error');
+            if (data.removed) location.reload();
+        }
+    } catch (e) {
+        showToast('Ошибка сети', 'error');
+    }
+}
+</script>

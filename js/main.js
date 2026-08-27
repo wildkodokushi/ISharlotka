@@ -71,7 +71,7 @@ async function addToCart(caseId, qty, customDesign = '') {
         const res = await fetch((window.BASE_URL||'') + '/api/cart_add.php', { method: 'POST', body: fd });
         const data = await res.json();
         if (data.success) {
-            showToast('Добавлено в корзину!');
+            showToast(data.clamped ? data.message : 'Добавлено в корзину!', data.clamped ? 'warning' : 'success');
             const badge = document.querySelector('.cart-badge');
             const btnCart = document.querySelector('.btn-cart');
             if (badge) badge.textContent = data.count;

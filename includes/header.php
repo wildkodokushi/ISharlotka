@@ -1,18 +1,66 @@
 <?php
 require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/auth.php';
-$cartCount = cartCount();
+$cartCount   = cartCount();
 $currentPage = basename($_SERVER['PHP_SELF']);
+
+// ── SEO defaults (переопределяются конкретной страницей до подключения header.php) ──
+$pageTitle       = $pageTitle       ?? 'iSharlotka — Авторские чехлы для телефона';
+$pageDescription = $pageDescription ?? 'iSharlotka — интернет-магазин авторских чехлов для мобильных устройств с онлайн-конструктором. Персонализируй свой чехол: выбери цвет, добавь фото, надпись и стикеры.';
+$pageImage       = $pageImage       ?? (BASE_URL . '/og-image.jpg');
+$pageCanonical   = $pageCanonical   ?? (BASE_URL . '/' . $currentPage . (isset($_GET['id']) ? '?id=' . (int)$_GET['id'] : ''));
+$pageNoIndex     = $pageNoIndex     ?? false; // true для приватных страниц (корзина, профиль и т.д.)
 ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle ?? 'iSharlotka — Авторские чехлы') ?></title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <!-- ── Primary SEO ──────────────────────────────────────────── -->
+    <title><?= htmlspecialchars($pageTitle) ?></title>
+    <meta name="description" content="<?= htmlspecialchars($pageDescription) ?>">
+    <link rel="canonical" href="<?= htmlspecialchars($pageCanonical) ?>">
+    <?php if ($pageNoIndex): ?>
+    <meta name="robots" content="noindex, nofollow">
+    <?php else: ?>
+    <meta name="robots" content="index, follow">
+    <?php endif; ?>
+    <meta name="theme-color" content="#0C0C0E">
+
+    <!-- ── Open Graph ───────────────────────────────────────────── -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="iSharlotka">
+    <meta property="og:title" content="<?= htmlspecialchars($pageTitle) ?>">
+    <meta property="og:description" content="<?= htmlspecialchars($pageDescription) ?>">
+    <meta property="og:image" content="<?= htmlspecialchars($pageImage) ?>">
+    <meta property="og:url" content="<?= htmlspecialchars($pageCanonical) ?>">
+    <meta property="og:locale" content="ru_RU">
+
+    <!-- ── Twitter Card ─────────────────────────────────────────── -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?= htmlspecialchars($pageTitle) ?>">
+    <meta name="twitter:description" content="<?= htmlspecialchars($pageDescription) ?>">
+    <meta name="twitter:image" content="<?= htmlspecialchars($pageImage) ?>">
+
+    <!-- ── Favicon ──────────────────────────────────────────────── -->
+    <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/favicon.svg">
+
+    <!-- ── Styles (шрифты подключены через @import внутри style.css) ── -->
     <link rel="stylesheet" href="<?= BASE_URL ?>/css/style.css">
+
+    <!-- ── Structured data ──────────────────────────────────────── -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "iSharlotka",
+        "url": "<?= BASE_URL ?>/",
+        "description": "Интернет-магазин авторских чехлов для мобильных устройств с онлайн-конструктором",
+        "logo": "<?= BASE_URL ?>/favicon.svg"
+    }
+    </script>
+
     <script>window.BASE_URL = '<?= BASE_URL ?>';</script>
 </head>
 <body>

@@ -1,5 +1,3 @@
-</div><!-- admin-content -->
-</div><!-- admin-layout -->
-<script src="<?= BASE_URL ?>/js/main.js"></script>
+</div><!-- /admin-main-content -->
 </body>
 </html>
