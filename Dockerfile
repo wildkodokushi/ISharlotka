@@ -10,28 +10,28 @@ WORKDIR /var/www/html
 # Копируем абсолютно все файлы вашего проекта в контейнер
 COPY . /var/www/html/
 
-# Настраиваем конфигурацию Nginx строго на порт 8080 (для IPv4 и IPv6)
-RUN echo 'server { \
-    listen 8080 default_server; \
-    listen [::]:8080 default_server; \
-    root /var/www/html; \
-    index index.php index.html; \
-    location / { \
-        try_files $uri $uri/ /index.php?$query_string; \
-    } \
-    location ~ \.php$ { \
-        fastcgi_pass 127.0.0.1:9000; \
-        fastcgi_index index.php; \
-        include fastcgi_params; \
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \
-    } \
-}' > /etc/nginx/http.d/default.conf
+# Переписываем стандартный конфиг Nginx — теперь он слушает порт 80
+RUN printf 'server { \n\
+    listen 80 default_server; \n\
+    listen [::]:80 default_server; \n\
+    root /var/www/html; \n\
+    index index.php index.html; \n\
+    location / { \n\
+        try_files $uri $uri/ /index.php?$query_string; \n\
+    } \n\
+    location ~ \.php$ { \n\
+        fastcgi_pass 127.0.0.1:9000; \n\
+        fastcgi_index index.php; \n\
+        include fastcgi_params; \n\
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \n\
+    } \n\
+}\n' > /etc/nginx/http.d/default.conf
 
 # Заменяем стандартный конфиг supervisor нашим локальным файлом
 COPY supervisord.conf /etc/supervisord.conf
 
-# Открываем порт 8080
-EXPOSE 8080
+# Открываем порт 80
+EXPOSE 80
 
 # Запускаем через supervisor
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
