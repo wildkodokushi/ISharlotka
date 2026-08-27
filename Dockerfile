@@ -10,10 +10,10 @@ WORKDIR /var/www/html
 # Копируем абсолютно все файлы вашего проекта в контейнер
 COPY . /var/www/html/
 
-# Настраиваем конфигурацию Nginx с разрешением внешних доменов хостинга
+# Создаем шаблон конфигурации Nginx с меткой _PORT_
 RUN printf 'server { \n\
-    listen 80 default_server; \n\
-    listen [::]:80 default_server; \n\
+    listen _PORT_ default_server; \n\
+    listen [::]:_PORT_ default_server; \n\
     server_name _; \n\
     root /var/www/html; \n\
     index index.php index.html; \n\
@@ -26,13 +26,16 @@ RUN printf 'server { \n\
         include fastcgi_params; \n\
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \n\
     } \n\
-}\n' > /etc/nginx/http.d/default.conf
+}\n' > /etc/nginx/http.d/default.conf.template
 
-# Заменяем стандартный конфиг supervisor нашим локальным файлом
-COPY supervisord.conf /etc/supervisord.conf
-
-# Открываем порт 80
-EXPOSE 80
+# Заменяем стандартный конфиг supervisor на запуск скрипта подстановки порта
+RUN printf '[supervisord]\n\
+nodaemon=true\n\
+user=root\n\
+[program:php-fpm]\n\
+command=php-fpm\n\
+[program:nginx]\n\
+command=sh -c "sed \"s/_PORT_/${PORT}/g\" /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf && nginx -g \"daemon off;\""\n' > /etc/supervisord.conf
 
 # Запускаем через supervisor
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
