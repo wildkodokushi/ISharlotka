@@ -10,10 +10,11 @@ WORKDIR /var/www/html
 # Копируем абсолютно все файлы вашего проекта в контейнер
 COPY . /var/www/html/
 
-# Переписываем стандартный конфиг Nginx — теперь он слушает порт 80
+# Настраиваем конфигурацию Nginx с разрешением внешних доменов хостинга
 RUN printf 'server { \n\
     listen 80 default_server; \n\
     listen [::]:80 default_server; \n\
+    server_name _; \n\
     root /var/www/html; \n\
     index index.php index.html; \n\
     location / { \n\
