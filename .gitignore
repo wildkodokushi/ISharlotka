@@ -2,7 +2,7 @@
 uploads/
 
 # База данных и конфигурации с паролями
-database.sql
+init.sql
 config/db.php
 config/config.php
 
