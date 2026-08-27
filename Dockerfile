@@ -6,7 +6,10 @@ RUN docker-php-ext-install pdo pdo_mysql mysqli
 # Включаем модуль rewrite для поддержки .htaccess
 RUN a2enmod rewrite
 
-# Важнейший хак для Railway: заменяем жесткий порт 80 на переменную среды PORT во всех конфигах Apache
+# РЕШЕНИЕ ОШИБКИ MPM: Принудительно отключаем конфликтующий модуль mpm_event
+RUN a2dismod mpm_event || true
+
+# Важнейший хак для Railway: динамически прокидываем порт во все конфиги
 RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
 # Копируем все файлы проекта внутрь контейнера
