@@ -7,13 +7,13 @@ RUN apk add --no-cache nginx supervisor \
 # Создаем рабочую директорию
 WORKDIR /var/www/html
 
-# Копируем файлы проекта
+# Копируем абсолютно все файлы вашего проекта в контейнер
 COPY . /var/www/html/
 
-# Создаем шаблон конфига Nginx (вместо порта пишем %PORT%)
+# Настраиваем конфигурацию Nginx строго на порт 8080 (для IPv4 и IPv6)
 RUN echo 'server { \
-    listen [%PORT%] default_server; \
-    listen %PORT% default_server; \
+    listen 8080 default_server; \
+    listen [::]:8080 default_server; \
     root /var/www/html; \
     index index.php index.html; \
     location / { \
@@ -25,16 +25,19 @@ RUN echo 'server { \
         include fastcgi_params; \
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \
     } \
-}' > /etc/nginx/http.d/default.conf.template
+}' > /etc/nginx/http.d/default.conf
 
-# Настраиваем Supervisor, который перед запуском Nginx подставит реальный порт из переменной $PORT
+# Настраиваем Supervisor для одновременного запуска Nginx и PHP-FPM
 RUN echo '[supervisord]\n\
 nodaemon=true\n\
 user=root\n\
 [program:php-fpm]\n\
 command=php-fpm\n\
 [program:nginx]\n\
-command=sh -c "sed -i \"s/%PORT%/${PORT}/g\" /etc/nginx/http.d/default.conf.template && cp /etc/nginx/http.d/default.conf.template /etc/nginx/http.d/default.conf && nginx -g \"daemon off;\""' > /etc/supervisord.conf
+command=nginx -g "daemon off;"' > /etc/supervisord.conf
+
+# Открываем порт 8080
+EXPOSE 8080
 
 # Запускаем через supervisor
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
