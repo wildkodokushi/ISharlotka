@@ -27,14 +27,8 @@ RUN echo 'server { \
     } \
 }' > /etc/nginx/http.d/default.conf
 
-# Настраиваем Supervisor для одновременного запуска Nginx и PHP-FPM
-RUN echo '[supervisord]\n\
-nodaemon=true\n\
-user=root\n\
-[program:php-fpm]\n\
-command=php-fpm\n\
-[program:nginx]\n\
-command=nginx -g "daemon off;"' > /etc/supervisord.conf
+# Заменяем стандартный конфиг supervisor нашим локальным файлом
+COPY supervisord.conf /etc/supervisord.conf
 
 # Открываем порт 8080
 EXPOSE 8080
