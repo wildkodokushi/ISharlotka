@@ -1,8 +1,8 @@
 <?php
-define('DB_HOST', 'localhost');
+define('DB_HOST', 'db'); 
 define('DB_NAME', 'cases_shop');
 define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_PASS', 'root'); 
 define('DB_CHARSET', 'utf8mb4');
 
 try {
@@ -17,5 +17,6 @@ try {
     );
 } catch (PDOException $e) {
     http_response_code(500);
-    die(json_encode(['error' => 'Ошибка подключения к базе данных.']));
+    // Для отладки локально лучше временно выводить реальную ошибку: $e->getMessage()
+    die(json_encode(['error' => 'Ошибка подключения к базе данных: ' . $e->getMessage()]));
 }
