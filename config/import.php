@@ -12,7 +12,7 @@ try {
     ]);
     
     // Ищем файл схемы в корне проекта
-    $sqlFile = __DIR__ . '/database.sql'; // <-- Укажите тут точное имя вашего файла (database.sql или init.sql)
+    $sqlFile = __DIR__ . '/init.sql'; // <-- Укажите тут точное имя вашего файла (database.sql или init.sql)
     if (!file_exists($sqlFile)) {
         die("Файл базы данных не найден в контейнере!");
     }
